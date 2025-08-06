@@ -1,3 +1,4 @@
+import asyncio
 import json
 import math
 import os
@@ -90,7 +91,28 @@ class LocalBackend(Backend):
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
+        in_event_loop = True
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            in_event_loop = False
+        if in_event_loop:
+            raise RuntimeError(
+                "LocalBackend used with 'with' inside a running event loop. Use 'async with LocalBackend()' instead."
+            )
+        # No event loop running; safe to close synchronously
         self._close()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        await self.close()
 
     async def close(self) -> None:
         """
