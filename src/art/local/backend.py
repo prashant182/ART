@@ -94,21 +94,12 @@ class LocalBackend(Backend):
         try:
             # If an event loop is running, force users to use the async context manager
             asyncio.get_running_loop()
-<<<<<<< HEAD
+            raise RuntimeError(
+                "LocalBackend used with 'with' inside a running event loop. Use 'async with LocalBackend()' instead."
+            )
         except RuntimeError:
             # No event loop running; safe to close synchronously
             self._close()
-
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        tb: TracebackType | None,
-    ) -> None:
-        await self.close()
 
     async def __aenter__(self) -> Self:
         return self
